@@ -25,9 +25,16 @@ export const BoardList = ({ orgId, query }: BoardListProps) => {
 
   if (data === undefined) {
     return (
-      <div className="flex justify-center items-center h-full">
-        <div className="text-muted-foreground text-center">
-          <h1 className="text-3xl font-semibold">Loading boards...</h1>
+      <div>
+        <h2 className="text-3xl">
+          {query.favourites ? "Favourite Boards" : "Team Boards"}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-6 gap-5 mt-8 pb-10">
+            <NeWBoardButton orgId={orgId} disabled={true} />
+            <BoardCard.Skeleton />
+            <BoardCard.Skeleton />
+            <BoardCard.Skeleton />
+            <BoardCard.Skeleton />
         </div>
       </div>
     );
@@ -65,7 +72,9 @@ export const BoardList = ({ orgId, query }: BoardListProps) => {
           </div>
         </div>
         <div className="flex justify-center items-center h-full mt-6">
-          <Button size={"lg"} onClick={onClick}>Create Board</Button>
+          <Button size={"lg"} onClick={onClick}>
+            Create Board
+          </Button>
         </div>
       </>
     );
