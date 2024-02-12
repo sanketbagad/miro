@@ -1,50 +1,74 @@
 import { v } from "convex/values";
-import {mutation} from "./_generated/server";
+import { mutation } from "./_generated/server";
 
-const images = [
-    "elements.svg",
-    "next.svg",
-    "logo.svg",
-]
+const images = ["elements.svg", "next.svg", "logo.svg"];
 
 export const create = mutation({
-    args: {
-        orgId: v.string(),
-        title: v.string(),
-    },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
+  args: {
+    orgId: v.string(),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
 
-        if (!identity) {
-            throw new Error("Unauthenticated");
-        }
-
-        const randomImage = images[Math.floor(Math.random() * images.length)];
-
-        const board = await ctx.db.insert("boards", {
-            title: args.title,
-            orgId: args.orgId,
-            authorId: identity.subject,
-            authorName: identity.name!,
-            imageUri: randomImage,
-        });
-
-        return board;
+    if (!identity) {
+      throw new Error("Unauthenticated");
     }
 
-})
+    const randomImage = images[Math.floor(Math.random() * images.length)];
+
+    const board = await ctx.db.insert("boards", {
+      title: args.title,
+      orgId: args.orgId,
+      authorId: identity.subject,
+      authorName: identity.name!,
+      imageUri: randomImage,
+    });
+
+    return board;
+  },
+});
 
 export const remove = mutation({
-    args: {
-        id: v.id("boards")
-    },
-    handler: async (ctx, args) => {
-        const identity = await ctx.auth.getUserIdentity();
+  args: {
+    id: v.id("boards"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
 
-        if (!identity) {
-            throw new Error("Unauthenticated");
-        }
-
-        await ctx.db.delete(args.id);
+    if (!identity) {
+      throw new Error("Unauthenticated");
     }
-})
+
+    await ctx.db.delete(args.id);
+  },
+});
+
+export const update = mutation({
+  args: {
+    id: v.id("boards"),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const title = args.title.trim();
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw new Error("Unauthenticated");
+    }
+
+    if (!title) {
+      throw new Error("Title is required");
+    }
+
+    if (title.length > 100) {
+      throw new Error("Title is too long");
+    }
+
+    const board = await ctx.db.patch(args.id, {
+      title: args.title,
+    });
+
+    return board;
+  },
+});
