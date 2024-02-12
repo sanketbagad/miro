@@ -13,6 +13,8 @@ import { Link2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useApiMutations } from "@/hooks/use-api-mutations";
 import { api } from "@/convex/_generated/api";
+import { ConfirmModel } from "./comfirm-model";
+import { Button } from "./ui/button";
 
 interface ActionProps {
   children: React.ReactNode;
@@ -29,7 +31,6 @@ export const Action = ({
   id,
   title,
 }: ActionProps) => {
-
   const { mutate, pending } = useApiMutations(api.board.remove);
 
   const onDelete = () => {
@@ -65,10 +66,20 @@ export const Action = ({
           <Link2 className="h-4 w-4 mr-2" />
           Copy Board Link
         </DropdownMenuItem>
-        <DropdownMenuItem className="p-3 cursor-pointer" onClick={onDelete}>
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </DropdownMenuItem>
+        <ConfirmModel
+          header="Are you sure?"
+          description="This action cannot be undone"
+          onConfirm={onDelete}
+          disabled={pending}
+        >
+          <Button
+            className="p-3 cursor-pointer text-sm w-full justify-start font-normal"
+            variant="ghost"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Delete
+          </Button>
+        </ConfirmModel>
       </DropdownMenuContent>
     </DropdownMenu>
   );
