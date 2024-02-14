@@ -16,7 +16,7 @@ interface BoardListProps {
 }
 
 export const BoardList = ({ orgId, query }: BoardListProps) => {
-  const data = useQuery(api.boards.get, { orgId });
+  const data = useQuery(api.boards.get, { orgId, ...query });
 
   const { pending, mutate } = useApiMutations(api.board.create);
   const onClick = () => {
@@ -39,6 +39,8 @@ export const BoardList = ({ orgId, query }: BoardListProps) => {
       </div>
     );
   }
+
+
 
   if (!data?.length && query.search) {
     return (
@@ -79,6 +81,8 @@ export const BoardList = ({ orgId, query }: BoardListProps) => {
       </>
     );
   }
+
+  console.log(data);
   return (
     <div>
       <h2 className="text-3xl">
@@ -96,7 +100,7 @@ export const BoardList = ({ orgId, query }: BoardListProps) => {
             authorName={board.authorName}
             createdAt={board._creationTime}
             orgId={orgId}
-            isFavourite={false}
+            isFavourite={board.isFavourite}
           />
         ))}
       </div>
