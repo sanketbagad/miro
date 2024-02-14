@@ -4,6 +4,7 @@ import { api } from "@/convex/_generated/api";
 import { useApiMutations } from "@/hooks/use-api-mutations";
 import { cn } from "@/lib/utils";
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 interface NeWBoardButtonProps {
@@ -12,10 +13,12 @@ interface NeWBoardButtonProps {
 }
 export const NeWBoardButton = ({ orgId, disabled }: NeWBoardButtonProps) => {
   const { pending, mutate } = useApiMutations(api.board.create);
+  const router = useRouter();
   const onClick = () => {
     mutate({ orgId, title: "New Board" })
       .then((res) => {
         toast.success("Board created successfully");
+        router.push(`/board/${res}`);
       })
       .catch((err) => {
         toast.error("Failed to create board");

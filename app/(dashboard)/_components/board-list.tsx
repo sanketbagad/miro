@@ -6,6 +6,8 @@ import { api } from "@/convex/_generated/api";
 import { BoardCard } from "./board-card";
 import { NeWBoardButton } from "./new-board-button";
 import { useApiMutations } from "@/hooks/use-api-mutations";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface BoardListProps {
   orgId: string;
@@ -17,10 +19,17 @@ interface BoardListProps {
 
 export const BoardList = ({ orgId, query }: BoardListProps) => {
   const data = useQuery(api.boards.get, { orgId, ...query });
+  const router = useRouter();
 
   const { pending, mutate } = useApiMutations(api.board.create);
   const onClick = () => {
-    mutate({ orgId, title: "New Board" });
+    mutate({ orgId, title: "New Board" }).then((res) => {
+        toast.success("Board created successfully");
+        router.push(`/board/${res}`);
+        }).catch((err) => {
+        toast.error("Failed to create board");
+    }
+    );
   };
 
   if (data === undefined) {
