@@ -11,7 +11,7 @@ export const useApiMutations = (mutationFunction: any) => {
     return apiMutation(payload)
       .finally(() => {
         setPending(false);
-      })
+      }) 
       .then((res) => {
         return res;
       })
