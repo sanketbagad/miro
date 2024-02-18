@@ -99,6 +99,14 @@ export const Canvas = ({ boardId }: CanvasProps) => {
     [lastUsedColor]
   );
 
+  const unselectLayers = useMutation((
+    { self, setMyPresence }
+  ) => {
+    if (self.presence.selection.length > 0) {
+      setMyPresence({ selection: [] }, { addToHistory: true });
+    }
+  }, []);
+
   const resizeSelectedLayer = useMutation(
     ({ storage, self }, point: Point) => {
       if (canvasState.mode !== CanvasMode.Resizing) {
@@ -111,14 +119,41 @@ export const Canvas = ({ boardId }: CanvasProps) => {
         point
       );
 
-      console.log(bounds);
-
       const liveLayers = storage.get("layers");
       const layer = liveLayers.get(self.presence.selection[0]);
 
       if (layer) {
         layer.update(bounds);
       }
+    },
+    [canvasState]
+  );
+
+ 
+
+  const translateSelectedLayers = useMutation(
+    ({ storage, self }, point: Point) => {
+      if (canvasState.mode !== CanvasMode.Translating) {
+        return;
+      }
+
+      const offset = {
+        x: point.x - canvasState.current.x,
+        y: point.y - canvasState.current.y,
+      };
+
+      const liveLayers = storage.get("layers");
+      for (const layerId of self.presence.selection) {
+        const layer = liveLayers.get(layerId);
+        if (layer) {
+          layer.update({
+            x: layer.get("x") + offset.x,
+            y: layer.get("y") + offset.y,
+          });
+        }
+      }
+
+      setCanvasState({ mode: CanvasMode.Translating, current: point });
     },
     [canvasState]
   );
@@ -141,10 +176,10 @@ export const Canvas = ({ boardId }: CanvasProps) => {
       //   startMultiSelection(current, canvasState.origin);
       // } else if (canvasState.mode === CanvasMode.SelectionNet) {
       //   updateSelectionNet(current, canvasState.origin);
-      // } else if (canvasState.mode === CanvasMode.Translating) {
-      //   translateSelectedLayers(current);
       // }
-      if (canvasState.mode === CanvasMode.Resizing) {
+      if (canvasState.mode === CanvasMode.Translating) {
+        translateSelectedLayers(current);
+      } else if (canvasState.mode === CanvasMode.Resizing) {
         resizeSelectedLayer(current);
       }
       // } else if (canvasState.mode === CanvasMode.Pencil) {
@@ -158,10 +193,22 @@ export const Canvas = ({ boardId }: CanvasProps) => {
       camera,
       canvasState,
       resizeSelectedLayer,
-      // translateSelectedLayers,
+      translateSelectedLayers,
       // startMultiSelection,
       // updateSelectionNet,
     ]
+  );
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      const point = pointerEventToCanvasPoint(e, camera);
+      console.log("pointer down", point);
+      if (canvasState.mode === CanvasMode.Inserting) {
+        return;
+      }
+      setCanvasState({ origin: point, mode: CanvasMode.Pressing });
+    },
+    [camera, canvasState.mode, setCanvasState]
   );
 
   const onPointerLeave = useMutation(
@@ -176,7 +223,14 @@ export const Canvas = ({ boardId }: CanvasProps) => {
     ({}, e) => {
       const point = pointerEventToCanvasPoint(e, camera);
 
-      if (canvasState.mode === CanvasMode.Inserting) {
+      if (
+        canvasState.mode === CanvasMode.None ||
+        canvasState.mode === CanvasMode.Pressing
+      ) {
+        console.log("unselecting");
+        unselectLayers();
+        setCanvasState({ mode: CanvasMode.None });
+      } else if (canvasState.mode === CanvasMode.Inserting) {
         insertLayer(canvasState.layerType, point);
       } else {
         setCanvasState({ mode: CanvasMode.None });
@@ -184,10 +238,8 @@ export const Canvas = ({ boardId }: CanvasProps) => {
 
       history.resume();
     },
-    [camera, canvasState, insertLayer, history]
+    [camera, canvasState, insertLayer, history, setCanvasState, unselectLayers]
   );
-
-  console.log("canvasState", canvasState);
 
   const selections = useOthersMapped((presence) => presence.presence.selection);
 
@@ -252,6 +304,7 @@ export const Canvas = ({ boardId }: CanvasProps) => {
         onPointerUp={onPointerUp}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
+        onPointerDown={onPointerDown}
         className="h-[100vh] w-[100vw]"
       >
         <g
