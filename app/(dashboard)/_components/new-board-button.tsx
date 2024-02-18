@@ -14,8 +14,11 @@ interface NeWBoardButtonProps {
 export const NeWBoardButton = ({ orgId, disabled }: NeWBoardButtonProps) => {
   const { pending, mutate } = useApiMutations(api.board.create);
   const router = useRouter();
+  // generate random board names for the new board
+
+  
   const onClick = () => {
-    mutate({ orgId, title: "New Board" })
+    mutate({ orgId, title: new Array(10).fill(0).map(() => Math.random().toString(36)[2]).join("") })
       .then((res) => {
         toast.success("Board created successfully");
         router.push(`/board/${res}`);
